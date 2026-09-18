@@ -129,7 +129,7 @@ async function init(){
 
 async function loadDolls(){
   const { data, error } = await sb.from('dolls').select('*').order('item_no', {ascending:true});
-  if(error){ showToast('讀取失敗'); return; }
+  if(error){ showToast('读取失败'); return; }
   dolls = data || [];
   renderCategoryFilters();
   renderGrid();
@@ -138,7 +138,7 @@ async function loadDolls(){
 function renderCategoryFilters(){
   const cats = [...new Set(dolls.map(d=>d.category).filter(Boolean))];
   const box = document.getElementById('categoryFilters');
-  box.innerHTML = `<button class="${categoryFilter==='all'?'active':''}" onclick="setCategoryFilter('all')">所有分類</button>` +
+  box.innerHTML = `<button class="${categoryFilter==='all'?'active':''}" onclick="setCategoryFilter('all')">所有分类</button>` +
     cats.map(c => `<button class="${categoryFilter===c?'active':''}" onclick="setCategoryFilter('${c}')">${c}</button>`).join('');
 }
 
@@ -182,7 +182,7 @@ function renderGrid(){
         <div class="cat">${d.category || ''}</div>
         <div class="price">${sym}${d.price || 0}</div>
         <div class="actions">
-          <button class="btnCart" ${d.sold?'disabled':''} onclick="toggleCart('${d.id}')">${inCart ? '✓ 已加入' : '加入購物車'}</button>
+          <button class="btnCart" ${d.sold?'disabled':''} onclick="toggleCart('${d.id}')">${inCart ? '✓ 已加入' : '加入购物车'}</button>
           <button class="btnFav ${inFav?'active':''}" onclick="toggleFav('${d.id}')">❤</button>
         </div>
       </div>
