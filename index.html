@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>玩偶展示櫥窗</title>
+<title>肉老板公仔展示专柜</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { box-sizing: border-box; }
@@ -66,7 +66,7 @@
 <div id="bgFixed"></div>
 
 <header>
-  <h1>🧸 玩偶展示櫥窗</h1>
+  <h1>🧸 肉老板公仔展示专柜</h1>
   <div class="filters" id="statusFilters">
     <button class="active" data-status="all">全部</button>
     <button data-status="available">未售出</button>
@@ -75,7 +75,7 @@
   <div class="filters" id="categoryFilters"></div>
   <div class="topActions">
     <button onclick="openPanel('fav')">❤️ 收藏 <span class="count" id="favCount">0</span></button>
-    <button onclick="openPanel('cart')">🛒 購物車 <span class="count" id="cartCount">0</span></button>
+    <button onclick="openPanel('cart')">🛒 购物车 <span class="count" id="cartCount">0</span></button>
   </div>
 </header>
 
@@ -84,15 +84,15 @@
 <div id="panelOverlay" onclick="closePanel()"></div>
 <div id="sidePanel">
   <div class="panelHeader">
-    <h3 id="panelTitle">購物車</h3>
+    <h3 id="panelTitle">购物车</h3>
     <button class="closeBtn" onclick="closePanel()">✕</button>
   </div>
   <div class="panelBody" id="panelBody"></div>
   <div class="panelFooter" id="cartFooter">
     <div id="totalLines"></div>
-    <input type="text" id="custName" placeholder="您的稱呼">
-    <input type="text" id="custContact" placeholder="聯絡方式 (WhatsApp/IG/電話)">
-    <button class="submit" onclick="submitOrder()">📩 送出清單給賣家</button>
+    <input type="text" id="custName" placeholder="您的称呼（咸鱼名字/微信名字）">
+    <input type="text" id="custContact" placeholder="联络方式 (咸鱼号/微信号/手机号码)">
+    <button class="submit" onclick="submitOrder()">📩 送出清单給老板</button>
   </div>
 </div>
 
@@ -173,7 +173,7 @@ function renderGrid(){
     <div class="card ${d.sold?'sold':''}">
       <div class="imgWrap">
         <span class="badge">No. ${String(d.item_no).padStart(3,'0')}</span>
-        ${!d.sold && d.negotiable ? '<span class="negBadge">可議價</span>' : ''}
+        ${!d.sold && d.negotiable ? '<span class="negBadge">可议价</span>' : ''}
         ${d.image_url ? `<img src="${d.image_url}">` : ''}
         ${d.sold ? '<div class="soldStamp">已售出</div>' : ''}
       </div>
@@ -221,7 +221,7 @@ function updateCounts(){
 
 function openPanel(type){
   currentPanel = type;
-  document.getElementById('panelTitle').textContent = type==='cart' ? '🛒 購物車' : '❤️ 收藏清單';
+  document.getElementById('panelTitle').textContent = type==='cart' ? '🛒 购物车' : '❤️ 收藏清单';
   document.getElementById('cartFooter').style.display = type==='cart' ? 'block' : 'none';
   renderPanel();
   document.getElementById('sidePanel').classList.add('open');
@@ -251,7 +251,7 @@ function renderPanel(){
     const totals = {};
     cart.forEach(c=>{ const cur=c.currency||'HKD'; totals[cur]=(totals[cur]||0)+ (c.price||0); });
     const lines = Object.entries(totals).map(([cur,amt])=>`${SYMBOL[cur]}${amt}`).join(' + ');
-    document.getElementById('totalLines').innerHTML = `<div class="totalLine"><b>總計: ${lines || SYMBOL.HKD+'0'}</b></div>`;
+    document.getElementById('totalLines').innerHTML = `<div class="totalLine"><b>总计: ${lines || SYMBOL.HKD+'0'}</b></div>`;
   }
 }
 
@@ -264,10 +264,10 @@ function removeFromPanel(type, id){
 }
 
 async function submitOrder(){
-  if(!cart.length){ showToast('購物車是空的'); return; }
+  if(!cart.length){ showToast('购物车是空的'); return; }
   const name = document.getElementById('custName').value.trim();
   const contact = document.getElementById('custContact').value.trim();
-  if(!contact){ showToast('請填寫聯絡方式'); return; }
+  if(!contact){ showToast('请填写联络方式'); return; }
 
   const totals = {};
   cart.forEach(c=>{ const cur=c.currency||'HKD'; totals[cur]=(totals[cur]||0)+ (c.price||0); });
@@ -280,8 +280,8 @@ async function submitOrder(){
     total_summary: totalSummary,
     completed: false
   });
-  if(error){ showToast('送出失敗: '+error.message); return; }
-  showToast('✅ 已送出,賣家會盡快聯絡您！');
+  if(error){ showToast('送出失败: '+error.message); return; }
+  showToast('✅ 已送出,老板会尽快联系您！');
   cart = [];
   localStorage.setItem('doll_cart', '[]');
   updateCounts();
