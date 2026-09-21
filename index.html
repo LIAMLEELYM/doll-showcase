@@ -35,6 +35,8 @@
   .badge { position:absolute; top:8px; left:8px; background:rgba(0,0,0,.6); color:#fff; font-size:12px; padding:3px 8px; border-radius:6px; }
   .negBadge { position:absolute; top:8px; right:8px; background:#f1c40f; color:#333; font-size:12px; padding:3px 8px; border-radius:6px; font-weight:bold; }
   .soldStamp { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%) rotate(-15deg); background:#e74c3c; color:#fff; font-weight:bold; padding:6px 16px; border-radius:6px; font-size:16px; }
+  .reservedStamp { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%) rotate(-15deg); background:#f39c12; color:#fff; font-weight:bold; padding:6px 16px; border-radius:6px; font-size:15px; }
+  .card.reserved { opacity:.7; }
   .body { padding:10px 12px; }
   .body .name { font-weight:bold; font-size:15px; margin-bottom:4px; }
   .body .cat { font-size:12px; color:#888; margin-bottom:4px; }
@@ -42,6 +44,7 @@
   .body .actions { display:flex; gap:6px; }
   .body .actions button { flex:1; padding:7px; border:none; border-radius:6px; cursor:pointer; font-size:12px; }
   .btnCart { background:#ff6b81; color:#fff; }
+  .btnCart:disabled { background:#ccc; color:#888; cursor:not-allowed; }
   .btnFav { background:#eee; }
   .btnFav.active { background:#f1c40f; }
   #panelOverlay { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; z-index:100; }
@@ -92,7 +95,7 @@
     <div id="totalLines"></div>
     <input type="text" id="custName" placeholder="您的称呼（咸鱼名字/微信名字）">
     <input type="text" id="custContact" placeholder="联络方式 (咸鱼号/微信号/手机号码)">
-    <button class="submit" onclick="submitOrder()">📩 送出清单給老板</button>
+    <button class="submit" onclick="submitOrder()">📩 送出清单给老板</button>
   </div>
 </div>
 
@@ -166,29 +169,31 @@ function renderGrid(){
     return true;
   });
   grid.innerHTML = list.map(d=>{
-    const sym = SYMBOL[d.currency || 'HKD'];
-    const inCart = cart.some(c=>c.id===d.id);
+    const sym = SYMBOL[d.currency || 'CNY'];
+    const inCart = cart.some(x=>x.id===d.id);
     const inFav = favs.some(f=>f.id===d.id);
+    const isReserved = !d.sold && d.reserved && !inCart;
     return `
-    <div class="card ${d.sold?'sold':''}">
+    <div class="card ${d.sold?'sold':''} ${isReserved?'reserved':''}">
       <div class="imgWrap">
         <span class="badge">No. ${String(d.item_no).padStart(3,'0')}</span>
         ${!d.sold && d.negotiable ? '<span class="negBadge">可议价</span>' : ''}
         ${d.image_url ? `<img src="${d.image_url}">` : ''}
-        ${d.sold ? '<div class="soldStamp">已售出</div>' : ''}
+        ${d.sold ? '<div class="soldStamp">已售出</div>' : (isReserved ? '<div class="reservedStamp">已被预订</div>' : '')}
       </div>
       <div class="body">
         <div class="name">${d.name || '未命名'}</div>
         <div class="cat">${d.category || ''}</div>
         <div class="price">${sym}${d.price || 0}</div>
         <div class="actions">
-          <button class="btnCart" ${d.sold?'disabled':''} onclick="toggleCart('${d.id}')">${inCart ? '✓ 已加入' : '加入购物车'}</button>
+          <button class="btnCart" ${d.sold||isReserved?'disabled':''} onclick="toggleCart('${d.id}')">${inCart ? '✓ 已加入' : (isReserved ? '已被预订' : '加入购物车')}</button>
           <button class="btnFav ${inFav?'active':''}" onclick="toggleFav('${d.id}')">❤</button>
         </div>
       </div>
     </div>`;
   }).join('');
 }
+
 
 function toggleCart(id){
   const d = dolls.find(x=>String(x.id)===String(id));
@@ -270,7 +275,7 @@ async function submitOrder(){
   if(!contact){ showToast('请填写联络方式'); return; }
 
   const totals = {};
-  cart.forEach(c=>{ const cur=c.currency||'HKD'; totals[cur]=(totals[cur]||0)+ (c.price||0); });
+  cart.forEach(it=>{ const cur=it.currency||'CNY'; totals[cur]=(totals[cur]||0)+ (it.price||0); });
   const totalSummary = Object.entries(totals).map(([cur,amt])=>`${SYMBOL[cur]}${amt}`).join(' + ');
 
   const { error } = await sb.from('orders').insert({
@@ -281,11 +286,16 @@ async function submitOrder(){
     completed: false
   });
   if(error){ showToast('送出失败: '+error.message); return; }
+
+  const cartIds = cart.map(it=>it.id);
+  const { error: resErr } = await sb.from('dolls').update({ reserved: true }).in('id', cartIds);
+  if(resErr) console.warn('标记预订状态失败:', resErr.message);
+
   showToast('✅ 已送出,老板会尽快联系您！');
   cart = [];
   localStorage.setItem('doll_cart', '[]');
   updateCounts();
-  renderGrid();
+  await loadDolls();
   closePanel();
 }
 
