@@ -105,6 +105,7 @@
 const SUPABASE_URL = 'https://xukivnefbzctctgvzedk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1a2l2bmVmYnpjdGN0Z3Z6ZWRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3MTUxNjEsImV4cCI6MjEwNTI5MTE2MX0.Hlxb6GgBq_V-z0epfvDa7WckgrLKiFU6sLJP8KnRAYk';
 
+
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const SYMBOL = { HKD:'HK$', CNY:'¥', JPY:'¥', KRW:'₩', TWD:'NT$', USD:'US$' };
@@ -130,10 +131,17 @@ async function init(){
   updateCounts();
 }
 
+function normalizeCategory(cat){
+  if(!cat) return '';
+  const t = cat.trim();
+  if(t === '未分類' || t === '未分类') return '';
+  return t;
+}
+
 async function loadDolls(){
   const { data, error } = await sb.from('dolls').select('*').order('item_no', {ascending:true});
   if(error){ showToast('读取失败'); return; }
-  dolls = data || [];
+  dolls = (data || []).map(d => ({ ...d, category: normalizeCategory(d.category) }));
   renderCategoryFilters();
   renderGrid();
 }
